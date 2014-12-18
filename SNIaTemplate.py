@@ -12,13 +12,6 @@ def dbconnect(dbname):
     try:
         con = sqlite3.connect(dbname)
 
-        cur = con.cursor()
-        cur.execute('SELECT SQLITE_VERSION()')
-
-        data = cur.fetchone()
-
-        print "SQLite version: %s" % data
-
     except sqlite3.Error:
         print "Cannot connect to SNIaTemplate.db"
         sys.exit(1)
@@ -30,24 +23,24 @@ def dbconnect(dbname):
 def fetchFilter(name):
     con = dbconnect("Filters.db")
     cur = con.cursor()
-    cur.execute("SELECT lambda, transmission FROM filterData WHERE name = ?", (name))
+    cur.execute("SELECT lambda, transmission FROM filterData WHERE name = '%s'" % (name))
     res = cur.fetchall()
-    cur.execute("SELECT centralWavelength FROM filterInfo WHERE name = ?", (name))
+    cur.execute("SELECT centralWavelength FROM filterInfo WHERE name = '%s'" % (name))
     lambdaCenter, = cur.fetchone()
     con.close()
     return lambdaCenter, res
 
 
 def quad(x,y):
-    return ( y[1:] + y[:-1] ) * ( x[1:] - x[:-1] ) / 2
+    return np.sum( ( y[1:] + y[:-1] ) * ( x[1:] - x[:-1] ) ) / 2
 
 
 def synphot(spec, filt, lambdaCenter):
 
     filtResample = interpolate.interp1d(filt['lambda'], filt['transmission'], bounds_error=False, fill_value=0.)(spec['lambda'])
-    flux = quad(spec['lambda'], spec['lambda'] * spec['flux'] * filtResample) / ( spec['lambda'], spec['lambda'] * filtResample )
+    flux = quad(spec['lambda'], spec['lambda'] * spec['flux'] * filtResample) / quad( spec['lambda'], spec['lambda'] * filtResample )
 
-    return -2.5 * np.log10(flux * lambdaCenter * ( lambdaCenter * 1e-8 ) / speedOfLight )
+    return -2.5 * np.log10(flux * lambdaCenter * ( lambdaCenter * 1e-8 ) / speedOfLight ) - 48.60
 
 
 def fetchSpecSeries(tableName):
@@ -80,4 +73,12 @@ def synthesizeLightCurve(SN = 'normal', filt = "PTF R", z = 0):
     return synLC
 
 if __name__ == "__main__":
-    print synthesizeLightCurve()
+    lc = np.array(synthesizeLightCurve(filt='PTF R'), dtype=[('day', 'f'), ('mag', 'f')])
+    with open("PTF_R_IaTemplate.txt", "w") as fp:
+        fp.write("# day, mag\n")
+        fp.write("".join(["%(day)5.2f  %(mag)5.2f\n" % row for row in lc]))
+    lc = np.array(synthesizeLightCurve(filt='PTF g'), dtype=[('day', 'f'), ('mag', 'f')])
+    with open("PTF_g_IaTemplate.txt", "w") as fp:
+        fp.write("# day, mag\n")
+        fp.write("".join(["%(day)5.2f  %(mag)5.2f\n" % row for row in lc]))
+

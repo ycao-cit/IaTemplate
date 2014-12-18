@@ -42,14 +42,14 @@ def ingestTemplate():
 
     with open("sn91bg_flux.v1.1.dat", "r") as fp:
         entry = ( tuple(map(float, row.split())) for row in fp if float(row.split()[0]) > 0.1 )
-        cur.executemany("INSERT INTO normal VALUES(?,?,?)", entry)
+        cur.executemany("INSERT INTO SN1991bg VALUES(?,?,?)", entry)
 
         # normal Ia
     cur.execute("CREATE TABLE IF NOT EXISTS SN1991T(day REAL, lambda REAL, flux REAL)")
 
     with open("sn91t_flux.v1.1.dat", "r") as fp:
         entry = ( tuple(map(float, row.split())) for row in fp if float(row.split()[0]) > 0.1 )
-        cur.executemany("INSERT INTO normal VALUES(?,?,?)", entry)
+        cur.executemany("INSERT INTO SN1991T VALUES(?,?,?)", entry)
 
     con.commit()
 
