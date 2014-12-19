@@ -13,7 +13,7 @@ def dbconnect(dbname):
         con = sqlite3.connect(dbname)
 
     except sqlite3.Error:
-        print "Cannot connect to SNIaTemplate.db"
+        print "Cannot connect to %s" % ( dbname )
         sys.exit(1)
 
     return con
@@ -81,4 +81,7 @@ if __name__ == "__main__":
     with open("PTF_g_IaTemplate.txt", "w") as fp:
         fp.write("# day, mag\n")
         fp.write("".join(["%(day)5.2f  %(mag)5.2f\n" % row for row in lc]))
-
+    lc = np.array(synthesizeLightCurve(filt='swift b'), dtype=[('day', 'f'), ('mag', 'f')])
+    with open("swift_b_IaTemplate.txt", "w") as fp:
+        fp.write("# day, mag\n")
+        fp.write("".join(["%(day)5.2f  %(mag)5.2f\n" % row for row in lc]))
